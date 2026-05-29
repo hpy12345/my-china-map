@@ -2,7 +2,15 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="format-detection" content="telephone=no, email=no, address=no" />
+    <meta name="theme-color" content="#0ea5e9" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- 微信分享卡片 -->
+    <meta property="og:title" content="🗺️ 我走过的中国 · 足迹地图" />
+    <meta property="og:description" content="一个交互式中国地图，记录你走过的每一座城市。" />
+    <meta property="og:type" content="website" />
     <title>中国地图点亮 · 我走过的城市</title>
     <!-- ECharts 核心库（已内嵌） -->
     <script>
@@ -88,14 +96,20 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             background: linear-gradient(160deg, #e0f2fe 0%, #fefce8 45%, #ecfccb 100%);
             color: var(--c-text);
             -webkit-tap-highlight-color: transparent;
+            -webkit-text-size-adjust: 100%;
+            -webkit-touch-callout: none;
+            overscroll-behavior: none;
         }
 
         #app {
             position: relative;
             width: 100vw;
             height: 100vh;
+            height: 100dvh; /* 动态视口高度，避开微信地址栏伸缩 */
             display: flex;
             flex-direction: column;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
         /* ===== 顶部标题栏 ===== */
@@ -173,55 +187,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             flex: 1;
             width: 100%;
             min-height: 0;
+            /* 关键：禁用浏览器默认手势，避免与 ECharts 双指缩放冲突 */
+            touch-action: none;
+            -ms-touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overscroll-behavior: contain;
         }
-
-        /* ===== 覆盖率进度条 ===== */
-        .progress-wrap {
-            position: absolute;
-            top: 70px;
-            left: 16px;
-            width: 240px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--c-line);
-            border-radius: 12px;
-            padding: 10px 14px;
-            box-shadow: var(--shadow-sm);
-            z-index: 18;
-        }
-
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: var(--c-text-soft);
-            margin-bottom: 6px;
-        }
-
-        .progress-label .pct {
-            font-weight: 700;
-            color: var(--c-accent);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .progress-bar {
-            height: 6px;
-            border-radius: 999px;
-            background: rgba(148, 163, 184, 0.18);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #fbbf24 0%, #f97316 50%, #ef4444 100%);
-            width: 0%;
-            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-            box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
-        }
+        /* ECharts canvas 同样禁用浏览器默认手势 */
+        #map canvas { touch-action: none; }
 
         /* ===== 右上角操作面板 ===== */
         .toolbar {
@@ -388,6 +362,8 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            min-height: 32px;
+            -webkit-tap-highlight-color: rgba(14, 165, 233, 0.08);
             font-size: 14px;
             font-weight: 600;
             color: var(--c-text);
@@ -657,63 +633,94 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         /* ===== 响应式 ===== */
         @media (max-width: 768px) {
             .header {
-                padding: 10px 12px;
-            }
-            .title {
-                font-size: 15px;
-                letter-spacing: 0.5px;
-            }
-            .stat-cards { gap: 6px; }
-            .stat-card { min-width: 56px; padding: 3px 8px; }
-            .stat-card .num { font-size: 15px; }
-            .stat-card .label { font-size: 10px; }
-
-            .progress-wrap {
-                top: auto;
-                bottom: 70px;
-                left: 12px;
-                right: 12px;
-                width: auto;
-            }
-
-            .toolbar {
-                top: auto;
-                bottom: 12px;
-                right: 12px;
-                left: 12px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
+                padding: 8px 12px;
                 gap: 6px;
             }
-
-            .city-panel {
-                left: 12px;
-                right: 12px;
-                width: auto;
-                bottom: 130px;
-                max-height: 32vh;
+            .title {
+                font-size: 14px;
+                letter-spacing: 0.5px;
+                flex: 1;
+                min-width: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
+            .stat-cards { gap: 5px; flex-shrink: 0; }
+            .stat-card { min-width: 50px; padding: 2px 7px; }
+            .stat-card .num { font-size: 14px; }
+            .stat-card .label { font-size: 10px; }
 
-            .tips { display: none; }
+            /* 工具栏锁底，4 按钮强制一行不换行；过窄时允许横向滚动 */
+            .toolbar {
+                top: auto;
+                bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+                right: 8px;
+                left: 8px;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                gap: 5px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .toolbar::-webkit-scrollbar { display: none; }
 
             .btn {
                 font-size: 12px;
-                padding: 7px 11px;
+                padding: 7px 8px;
+                flex: 1 1 0;
+                min-width: 0;
+                gap: 3px;
+                white-space: nowrap;
             }
 
+            /* 城市面板：贴在工具栏上方，默认折叠 */
+            .city-panel {
+                left: 10px;
+                right: 10px;
+                width: auto;
+                bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+                max-height: 40vh;
+                padding: 10px 12px;
+                z-index: 17;
+            }
+            .city-panel.collapsed {
+                transform: translateY(calc(100% - 40px));
+            }
+            .city-panel-header { font-size: 13px; padding-bottom: 6px; }
+            .city-list { margin-top: 8px; }
+            .city-tag { font-size: 11px; padding: 4px 9px; }
+
+            .tips { display: none; }
+
             .back-btn {
-                top: 64px;
-                left: 12px;
+                top: calc(56px + env(safe-area-inset-top, 0px));
+                left: 10px;
                 font-size: 12px;
                 padding: 6px 11px;
             }
+
+            /* Toast 居中偏上，避开手指操作区 */
+            .toast {
+                top: 38%;
+                font-size: 13px;
+                padding: 10px 18px;
+            }
         }
 
-        @media (max-width: 768px) and (min-height: 600px) {
-            .city-panel.collapsed {
-                transform: translateY(calc(100% - 44px));
-            }
+        /* 极窄屏额外压缩 */
+        @media (max-width: 360px) {
+            .title { font-size: 13px; }
+            .stat-card { min-width: 44px; padding: 2px 5px; }
+            .stat-card .num { font-size: 13px; }
+            .btn { font-size: 11px; padding: 6px 6px; }
+        }
+
+        /* 横屏：城市面板让位 */
+        @media (max-width: 900px) and (orientation: landscape) {
+            .city-panel { max-height: 40vh; bottom: 60px; }
+            .toolbar { bottom: 6px; }
         }
     </style>
 </head>
@@ -739,21 +746,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
     <div id="map"></div>
 
-    <!-- 覆盖率进度条 -->
-    <div class="progress-wrap">
-        <div class="progress-label">
-            <span>🇨🇳 全国覆盖度</span>
-            <span class="pct" id="prog-pct">0%</span>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="prog-fill"></div>
-        </div>
-    </div>
-
     <!-- 返回按钮（省级视图显示） -->
     <button class="back-btn" id="back-btn">◀ 返回全国</button>
 
-    <div class="toolbar">
+    <div class="toolbar" id="toolbar-wrap">
         <button class="btn accent" id="btn-snapshot">📸 保存图片</button>
         <button class="btn primary" id="btn-export">💾 导出数据</button>
         <button class="btn" id="btn-import">📂 导入数据</button>
@@ -766,8 +762,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         <div class="city-panel-header" id="panel-header">
             <span>🏙️ 已点亮城市列表</span>
             <span class="toggle" id="panel-toggle">收起 ▾</span>
-        </div>
-        <div class="city-list" id="city-list">
+        </div>        <div class="city-list" id="city-list">
             <div class="empty-hint">
                 <span class="emoji">🌏</span>
                 还没有点亮任何城市<br/>快去地图上点击你去过的地方吧～
@@ -880,6 +875,15 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         countryFeatureMeta: null,
         provinceFeatureMeta: {},
     };
+
+    // 移动端判断：用于调整 ECharts 交互参数
+    const isMobile = (() => {
+        if (typeof window === 'undefined') return false;
+        const ua = navigator.userAgent || '';
+        const touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        return touch && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad|iPod|MicroMessenger/i.test(ua));
+    })();
+    const isWeChat = /MicroMessenger/i.test(navigator.userAgent || '');
 
     // ========= 本地存储 =========
     function loadLitCities() {
@@ -1121,7 +1125,7 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
             geo: {
                 map: 'china',
                 roam: false,
-                zoom: 1.2,
+                zoom: isMobile ? 1.15 : 1.2,
                 aspectScale: 0.75,
                 z: 0,
                 itemStyle: {
@@ -1147,14 +1151,14 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
                     type: 'map',
                     map: 'china',
                     roam: true,
-                    zoom: 1.2,
-                    scaleLimit: { min: 0.8, max: 8 },
+                    zoom: isMobile ? 1.15 : 1.2,
+                    scaleLimit: { min: isMobile ? 1 : 0.8, max: 12 },
                     aspectScale: 0.75,
                     z: 2,
                     label: {
                         show: true,
                         color: '#1e293b',
-                        fontSize: 11,
+                        fontSize: isMobile ? 10 : 11,
                         fontWeight: 500,
                         formatter: (p) => (p.data && p.data.shortName) || toShortName(p.name),
                         textBorderColor: 'rgba(255,255,255,0.85)',
@@ -1261,12 +1265,12 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
                     type: 'map',
                     map: `province_${provinceAdcode}`,
                     roam: true,
-                    zoom: 1.05,
-                    scaleLimit: { min: 0.6, max: 8 },
+                    zoom: isMobile ? 1.0 : 1.05,
+                    scaleLimit: { min: isMobile ? 0.8 : 0.6, max: 12 },
                     label: {
                         show: true,
                         color: '#1e293b',
-                        fontSize: 11,
+                        fontSize: isMobile ? 10 : 11,
                         fontWeight: 500,
                         formatter: (p) => (p.data && p.data.shortName) || toShortName(p.name),
                         textBorderColor: 'rgba(255,255,255,0.85)',
@@ -1387,12 +1391,10 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         });
         document.getElementById('prov-count').textContent = provSet.size;
 
-        // 覆盖率
+        // 覆盖率（顶部 stat-card 唯一展示位）
         const pct = Math.min(100, (litCount / TOTAL_CITIES) * 100);
         const pctText = pct < 1 && pct > 0 ? pct.toFixed(1) + '%' : Math.round(pct) + '%';
         document.getElementById('cov-pct').textContent = pctText;
-        document.getElementById('prog-pct').textContent = pctText;
-        document.getElementById('prog-fill').style.width = pct + '%';
 
         const listEl = document.getElementById('city-list');
         if (litCount === 0) {
@@ -1655,6 +1657,16 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
 
         if (!state._evtBound) bindEvents();
         updateSideInfo();
+
+        // 移动端：默认折叠城市面板，避免遮挡地图
+        if (isMobile) {
+            const panel = document.getElementById('city-panel');
+            const toggle = document.getElementById('panel-toggle');
+            if (panel && !panel.classList.contains('collapsed')) {
+                panel.classList.add('collapsed');
+                if (toggle) toggle.textContent = '展开 ▴';
+            }
+        }
     }
 
     function bindEvents() {
@@ -1682,6 +1694,20 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         });
 
         window.addEventListener('resize', () => state.chart.resize());
+        // 旋转屏幕 / 微信地址栏伸缩 -> 重新 resize（延迟一帧等待布局稳定）
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => state.chart && state.chart.resize(), 200);
+        });
+        // 微信浏览器：visibilitychange 后强制 resize 以修复 canvas 比例
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && state.chart) {
+                setTimeout(() => state.chart.resize(), 100);
+            }
+        });
+
+        // 仅阻止 iOS Safari 整页双指缩放（gesturestart 是 Safari 专属事件，
+        // 不会影响 ECharts 自身的双指/单指识别）
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
 
         // 按钮事件
         document.getElementById('btn-export').addEventListener('click', exportData);
@@ -1697,13 +1723,19 @@ var Fr={},Gr={};var Wr,Hr=function(){function t(t,e,n){var i=this;this._sleepAft
         });
         document.getElementById('back-btn').addEventListener('click', backToCountry);
 
-        // 城市面板折叠
+        // 城市面板折叠：click 处理；同时 touchend 兜底（防 iOS 偶发 click 失效）
         const panel = document.getElementById('city-panel');
         const toggle = document.getElementById('panel-toggle');
-        document.getElementById('panel-header').addEventListener('click', () => {
+        const panelHeader = document.getElementById('panel-header');
+        const togglePanel = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             panel.classList.toggle('collapsed');
             toggle.textContent = panel.classList.contains('collapsed') ? '展开 ▴' : '收起 ▾';
-        });
+        };
+        panelHeader.addEventListener('click', togglePanel);
 
         // 快捷键
         document.addEventListener('keydown', (e) => {
